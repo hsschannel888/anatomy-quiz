@@ -3,109 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Anatomy Quick Quiz - เมนูหลัก</title>
+<title>Anatomy Quick Quiz</title>
 <style>
-  :root {
-    --ink: #4a3540; --ink-soft: #9b8790; --line: #f5dfe6; --bg: #fff8f3; --card: #fff;
-    --accent: #16b897; --accent-soft: #d9f5ec;
-  }
+  :root { --ink: #4a3540; --ink-soft: #9b8790; --line: #f5dfe6; --bg: #fff8f3; --accent: #16b897; --accent-soft: #d9f5ec; }
   * { box-sizing: border-box; }
   body {
     margin: 0; font-family: -apple-system,"Segoe UI","Noto Sans Thai",sans-serif;
-    background: var(--bg); color: var(--ink); min-height: 100vh; padding: 40px 20px;
+    background: var(--bg); color: var(--ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
   }
-  .wrap { max-width: 640px; margin: 0 auto; }
-  .title { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-  .sub { text-align: center; color: var(--ink-soft); font-size: 14px; margin-bottom: 32px; }
-  .section-title { font-size: 14px; font-weight: 700; color: var(--accent); margin: 28px 0 12px; }
-  .link-card {
-    display: flex; align-items: center; gap: 16px; background: #fff; border: 1px solid var(--line);
-    border-radius: 18px; padding: 16px 18px; margin-bottom: 12px; text-decoration: none; color: var(--ink);
-    box-shadow: 0 3px 14px rgba(74,53,64,0.06);
+  .wrap { max-width: 460px; width: 100%; text-align: center; }
+  .title { font-size: 30px; font-weight: 700; margin-bottom: 6px; }
+  .sub { color: var(--ink-soft); font-size: 15px; margin-bottom: 36px; }
+  .role-card {
+    display: flex; align-items: center; gap: 18px; background: #fff; border: 1px solid var(--line);
+    border-radius: 20px; padding: 22px 24px; margin-bottom: 16px; text-decoration: none; color: var(--ink);
+    box-shadow: 0 3px 14px rgba(74,53,64,0.06); text-align: left;
   }
-  .link-icon { font-size: 26px; flex-shrink: 0; }
-  .link-body { flex: 1; }
-  .link-title { font-size: 15px; font-weight: 600; }
-  .link-desc { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
-  .link-who {
-    font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft);
-    padding: 4px 10px; border-radius: 10px; flex-shrink: 0;
-  }
+  .role-icon { font-size: 34px; flex-shrink: 0; }
+  .role-title { font-size: 18px; font-weight: 700; }
+  .role-desc { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="title">🦴 Anatomy Quick Quiz</div>
-  <div class="sub">เลือกหน้าที่ต้องใช้งานตามด้านล่าง</div>
+  <div class="sub">เลือกว่าคุณเป็นใคร</div>
 
-  <div class="section-title">📋 ก่อนวันแข่งขัน</div>
-  <a class="link-card" href="admin-questions.html">
-    <span class="link-icon">✨</span>
-    <span class="link-body">
-      <div class="link-title">จัดการคำถาม</div>
-      <div class="link-desc">ใส่คำถาม+รูป+เฉลย 100 ข้อ</div>
+  <a class="role-card" href="admin.html">
+    <span class="role-icon">🔐</span>
+    <span>
+      <div class="role-title">แอดมิน</div>
+      <div class="role-desc">จัดการคำถาม, อนุมัติผู้เข้าแข่งขัน, ควบคุมการแข่งขัน</div>
     </span>
-    <span class="link-who">แอดมิน</span>
-  </a>
-  <a class="link-card" href="participant-register.html">
-    <span class="link-icon">🎉</span>
-    <span class="link-body">
-      <div class="link-title">สมัครเข้าแข่งขัน</div>
-      <div class="link-desc">ให้เด็กกรอกรหัส+ชื่อ (ทำเป็น QR แจกได้)</div>
-    </span>
-    <span class="link-who">เด็ก</span>
-  </a>
-  <a class="link-card" href="admin-participants.html">
-    <span class="link-icon">✅</span>
-    <span class="link-body">
-      <div class="link-title">อนุมัติ + จัดทีม</div>
-      <div class="link-desc">อนุมัติผู้สมัคร และจัดเข้าทีม</div>
-    </span>
-    <span class="link-who">แอดมิน</span>
   </a>
 
-  <div class="section-title">🏁 วันแข่งขัน</div>
-  <a class="link-card" href="admin-control.html">
-    <span class="link-icon">🎮</span>
-    <span class="link-body">
-      <div class="link-title">ควบคุมการแข่งขัน</div>
-      <div class="link-desc">กดเริ่ม/เปลี่ยนข้อคำถาม</div>
+  <a class="role-card" href="participant.html">
+    <span class="role-icon">🎯</span>
+    <span>
+      <div class="role-title">ผู้เข้าแข่งขัน</div>
+      <div class="role-desc">สมัครเข้าแข่งขัน หรือเข้าตอบคำถามในวันแข่ง</div>
     </span>
-    <span class="link-who">แอดมิน</span>
-  </a>
-  <a class="link-card" href="projector.html">
-    <span class="link-icon">📽️</span>
-    <span class="link-body">
-      <div class="link-title">จอโปรเจกเตอร์</div>
-      <div class="link-desc">เปิดฉายจอกลางให้ทุกคนดู</div>
-    </span>
-    <span class="link-who">จอกลาง</span>
-  </a>
-  <a class="link-card" href="participant-quiz.html">
-    <span class="link-icon">🎯</span>
-    <span class="link-body">
-      <div class="link-title">ตอบคำถาม</div>
-      <div class="link-desc">เปิดจากมือถือของผู้เข้าแข่งขันแต่ละคน</div>
-    </span>
-    <span class="link-who">เด็ก</span>
-  </a>
-
-  <div class="section-title">📊 หลังการแข่งขัน</div>
-  <a class="link-card" href="admin-review.html">
-    <span class="link-icon">📊</span>
-    <span class="link-body">
-      <div class="link-title">ดูผลรายข้อ</div>
-      <div class="link-desc">ดูว่าใครตอบถูก/ผิดข้อไหนบ้าง</div>
-    </span>
-    <span class="link-who">แอดมิน</span>
-  </a>
-  <a class="link-card" href="admin-reset.html">
-    <span class="link-icon">🔄</span>
-    <span class="link-body">
-      <div class="link-title">เริ่มรอบใหม่</div>
-      <div class="link-desc">Export ผล + ล้างข้อมูลสำหรับรอบถัดไป</div>
-    </span>
-    <span class="link-who">แอดมิน</span>
   </a>
 </div>
 </body>

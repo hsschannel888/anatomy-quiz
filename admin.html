@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>แอดมิน - Anatomy Quick Quiz</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #4a3540; --ink-soft: #9b8790; --line: #f5dfe6; --bg: #fff8f3; --card: #fff;
+    --accent: #16b897; --accent-soft: #d9f5ec; --danger: #ef6f6f; --danger-soft: #ffe8e8;
+    --warn: #f0a44c; --warn-soft: #fff1de; --radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system,"Segoe UI","Noto Sans Thai",sans-serif; background: var(--bg); color: var(--ink); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 80px; }
+  .back-link { display: inline-block; font-size: 13px; color: var(--ink-soft); text-decoration: none; margin-bottom: 10px; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  h2 { font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 18px; box-shadow: 0 3px 14px rgba(74,53,64,0.06); }
+  input[type=text], input[type=email], input[type=password], input[type=number], textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; font-size: 14px; font-family: inherit; margin-bottom: 14px; background: #fff; color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; font-family: inherit; background: #fff; color: var(--ink); }
+  label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 500; }
+  button { font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 14px; border: none; padding: 9px 16px; cursor: pointer; }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 999px; box-shadow: 0 3px 10px rgba(22,184,151,0.25); }
+  .btn-primary:hover { background: #119b81; }
+  .btn-primary:disabled { background: #d8cdd1; box-shadow: none; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); }
+  .btn-approve { background: var(--accent-soft); color: var(--accent); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .choice-option { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 14px; padding: 8px 10px; margin-bottom: 10px; }
+  .choice-option input[type=text] { margin-bottom: 0; }
+  .choice-letter { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .radio-correct { flex-shrink: 0; width: 18px; height: 18px; accent-color: var(--accent); }
+  .qlist-item { display: flex; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; align-items: flex-start; }
+  .qlist-thumb { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: var(--bg); flex-shrink: 0; }
+  .qlist-thumb.empty { display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 11px; border: 1px dashed var(--line); }
+  .qlist-body { flex: 1; min-width: 0; }
+  .qlist-no { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+  .qlist-text { font-size: 14px; margin: 2px 0 6px; }
+  .qlist-choices { font-size: 12px; color: var(--ink-soft); display: flex; gap: 14px; flex-wrap: wrap; }
+  .correct-tag { color: var(--accent); font-weight: 700; }
+  .qlist-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .counter-badge { display: inline-block; background: var(--accent-soft); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+  .counter-badge.incomplete { background: var(--warn-soft); color: var(--warn); }
+  .error-msg { background: var(--danger-soft); color: var(--danger); padding: 10px 14px; border-radius: 14px; font-size: 13px; margin-bottom: 14px; }
+  .success-msg { background: var(--accent-soft); color: var(--accent); padding: 12px 16px; border-radius: 14px; font-size: 13px; margin-bottom: 14px; }
+  .warning-box { background: var(--danger-soft); color: var(--danger); padding: 14px 16px; border-radius: 14px; font-size: 13px; margin-bottom: 16px; }
+  .empty-state { text-align: center; padding: 30px 20px; color: var(--ink-soft); font-size: 14px; }
+  .img-upload-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .img-preview { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; border: 1px solid var(--line); }
+  .login-box { max-width: 360px; margin: 80px auto 0; }
+  .login-box input { margin-bottom: 14px; }
+  .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn { background: #fff; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600; }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .filter-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 999px; }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .team-add-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .team-add-row input { flex: 1; margin-bottom: 0; }
+  .team-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 6px 8px 6px 14px; margin: 0 8px 8px 0; font-size: 13px; }
+  .plist-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+  .plist-info { flex: 1; min-width: 140px; }
+  .plist-name { font-size: 14px; font-weight: 600; }
+  .plist-code { font-size: 12px; color: var(--ink-soft); }
+  .status-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 700; }
+  .status-approved { background: var(--accent-soft); color: var(--accent); }
+  .status-pending { background: var(--warn-soft); color: var(--warn); }
+  .no-team-warning { font-size: 11px; color: var(--warn); margin-top: 2px; }
+  .status-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .status-pill { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; }
+  .status-waiting { background: #eef0ec; color: var(--ink-soft); }
+  .status-live { background: var(--accent-soft); color: var(--accent); }
+  .status-finished { background: var(--danger-soft); color: var(--danger); }
+  .q-display { text-align: center; padding: 16px 0; }
+  .q-no { font-size: 13px; color: var(--ink-soft); }
+  .q-text { font-size: 18px; font-weight: 700; margin: 6px 0 4px; }
+  .submit-count { font-size: 13px; color: var(--ink-soft); }
+  .controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .qlist { max-height: 260px; overflow-y: auto; }
+  .qlist-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+  .qlist-row.current { background: var(--accent-soft); font-weight: 700; }
+  .projector-preview { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 16px; }
+  .projector-preview iframe { width: 100%; height: 420px; border: none; display: block; }
+  .search-row { margin-bottom: 16px; }
+  .matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+  table { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--line); }
+  th { background: var(--accent-soft); color: var(--accent); font-weight: 700; position: sticky; top: 0; }
+  .name-col { position: sticky; left: 0; background: #fff; text-align: left; font-weight: 600; z-index: 2; border-right: 1px solid var(--line); }
+  th.name-col { z-index: 3; }
+  .cell-correct { color: #16b897; font-weight: 700; }
+  .cell-wrong { color: #ef6f6f; font-weight: 700; }
+  .cell-none { color: #d8cdd1; }
+  .row-score { font-weight: 700; color: var(--accent); }
+  .step-title { font-size: 15px; font-weight: 700; margin: 0 0 6px; }
+  .step-desc { font-size: 13px; color: var(--ink-soft); margin: 0 0 16px; }
+  .stat-row { display: flex; gap: 20px; margin-bottom: 4px; font-size: 13px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CHOICES = ["A", "B", "C", "D"];
+const emptyForm = { question_no: "", question_text: "", choice_a: "", choice_b: "", choice_c: "", choice_d: "", correct_choice: "A", image_url: "" };
+const CONFIRM_WORD = "ล้างข้อมูล";
+
+function LoginBox({ onLoggedIn }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const handleLogin = async () => {
+    setError(""); setLoading(true);
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (err) { setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); return; }
+    onLoggedIn(data.session);
+  };
+  return (
+    <div className="login-box">
+      <div className="card">
+        <h1>🔐 เข้าสู่ระบบแอดมิน</h1>
+        <p className="sub">Anatomy Quick Quiz</p>
+        {error && <div className="error-msg">{error}</div>}
+        <label>อีเมล</label>
+        <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+        <label>รหัสผ่าน</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLogin()} />
+        <button className="btn-primary" onClick={handleLogin} disabled={loading} style={{ width: "100%" }}>
+          {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- แท็บ 1: จัดการคำถาม ---------------- */
+function QuestionForm({ initial, onSaved, onCancel }) {
+  const [form, setForm] = useState(initial || emptyForm);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+
+  const handleSave = async () => {
+    setError("");
+    if (!form.question_no || !form.question_text || !form.choice_a || !form.choice_b || !form.choice_c || !form.choice_d) {
+      setError("กรอกข้อมูลให้ครบทุกช่องก่อนบันทึก"); return;
+    }
+    setUploading(true);
+    let image_url = form.image_url || null;
+    if (imageFile) {
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `q${form.question_no}-${Date.now()}.${fileExt}`;
+      const { error: uploadErr } = await supabase.storage.from("question-images").upload(fileName, imageFile);
+      if (uploadErr) { setError("อัปโหลดรูปไม่สำเร็จ: " + uploadErr.message); setUploading(false); return; }
+      const { data: urlData } = supabase.storage.from("question-images").getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
+    }
+    const payload = {
+      question_no: parseInt(form.question_no, 10), question_text: form.question_text,
+      choice_a: form.choice_a, choice_b: form.choice_b, choice_c: form.choice_c, choice_d: form.choice_d, image_url,
+    };
+    let questionId = form.id;
+    if (questionId) {
+      const { error: updErr } = await supabase.from("questions").update(payload).eq("id", questionId);
+      if (updErr) { setError("บันทึกไม่สำเร็จ: " + updErr.message); setUploading(false); return; }
+    } else {
+      const { data: inserted, error: insErr } = await supabase.from("questions").insert(payload).select().single();
+      if (insErr) { setError("บันทึกไม่สำเร็จ: " + insErr.message); setUploading(false); return; }
+      questionId = inserted.id;
+    }
+    const { error: keyErr } = await supabase.from("answer_keys").upsert({ question_id: questionId, correct_choice: form.correct_choice });
+    if (keyErr) { setError("บันทึกเฉลยไม่สำเร็จ: " + keyErr.message); setUploading(false); return; }
+    setUploading(false);
+    onSaved();
+  };
+
+  return (
+    <div className="card">
+      <h1 style={{ marginBottom: 18 }}>{form.id ? "✏️ แก้ไขคำถาม" : "✨ เพิ่มคำถามใหม่"}</h1>
+      {error && <div className="error-msg">{error}</div>}
+      <div className="row2"><div><label>ข้อที่</label><input type="number" value={form.question_no} onChange={e => set("question_no", e.target.value)} placeholder="1" /></div></div>
+      <label>คำถาม</label>
+      <textarea value={form.question_text} onChange={e => set("question_text", e.target.value)} placeholder="พิมพ์คำถามที่นี่..." />
+      <label>รูปภาพประกอบ (ถ้ามี)</label>
+      <div className="img-upload-row">
+        {(imageFile || form.image_url) && <img className="img-preview" src={imageFile ? URL.createObjectURL(imageFile) : form.image_url} alt="preview" />}
+        <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} />
+      </div>
+      <label>ตัวเลือกคำตอบ (เลือก radio ข้อที่ถูก)</label>
+      {CHOICES.map(letter => (
+        <div className="choice-option" key={letter}>
+          <input type="radio" className="radio-correct" name="correct" checked={form.correct_choice === letter} onChange={() => set("correct_choice", letter)} />
+          <span className="choice-letter">{letter}</span>
+          <input type="text" value={form[`choice_${letter.toLowerCase()}`]} onChange={e => set(`choice_${letter.toLowerCase()}`, e.target.value)} placeholder={`ตัวเลือก ${letter}`} />
+        </div>
+      ))}
+      <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+        <button className="btn-primary" onClick={handleSave} disabled={uploading}>{uploading ? "กำลังบันทึก..." : "บันทึกคำถาม"}</button>
+        <button className="btn-ghost" onClick={onCancel}>ยกเลิก</button>
+      </div>
+    </div>
+  );
+}
+
+function QuestionsTab() {
+  const [questions, setQuestions] = useState([]);
+  const [answerKeys, setAnswerKeys] = useState({});
+  const [editing, setEditing] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const loadQuestions = async () => {
+    setLoading(true);
+    const { data: qData } = await supabase.from("questions").select("*").order("question_no", { ascending: true });
+    const { data: kData } = await supabase.from("answer_keys").select("*");
+    setQuestions(qData || []);
+    const keyMap = {};
+    (kData || []).forEach(k => { keyMap[k.question_id] = k.correct_choice; });
+    setAnswerKeys(keyMap);
+    setLoading(false);
+  };
+  useEffect(() => { loadQuestions(); }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("ลบคำถามข้อนี้? การลบไม่สามารถย้อนกลับได้")) return;
+    await supabase.from("questions").delete().eq("id", id);
+    loadQuestions();
+  };
+  const handleEdit = (q) => { setEditing({ ...q, correct_choice: answerKeys[q.id] || "A" }); setShowForm(true); };
+  const handleAddNew = () => { setEditing(null); setShowForm(true); };
+  const total = questions.length;
+  const isComplete = total >= 100;
+
+  if (showForm) {
+    return <QuestionForm initial={editing} onCancel={() => setShowForm(false)} onSaved={() => { setShowForm(false); loadQuestions(); }} />;
+  }
+
+  return (
+    <div>
+      <div className="top-nav">
+        <div><h2 style={{ margin: 0 }}>🦴 จัดการคำถาม</h2><p className="sub" style={{ marginBottom: 0 }}>คลังคำถามสำหรับรอบแข่งขันปัจจุบัน</p></div>
+        <button className="btn-primary" onClick={handleAddNew}>+ เพิ่มคำถาม</button>
+      </div>
+      <span className={`counter-badge ${isComplete ? "" : "incomplete"}`}>{total}/100 ข้อ {isComplete ? "ครบแล้ว" : "ยังไม่ครบ"}</span>
+      {loading && <p className="sub">กำลังโหลด...</p>}
+      {!loading && questions.length === 0 && <div className="card empty-state">ยังไม่มีคำถามในระบบ กด "+ เพิ่มคำถาม" เพื่อเริ่มใส่ข้อแรก</div>}
+      {!loading && questions.map(q => (
+        <div className="qlist-item" key={q.id}>
+          {q.image_url ? <img className="qlist-thumb" src={q.image_url} alt="" /> : <div className="qlist-thumb empty">ไม่มีรูป</div>}
+          <div className="qlist-body">
+            <div className="qlist-no">ข้อ {q.question_no}</div>
+            <div className="qlist-text">{q.question_text}</div>
+            <div className="qlist-choices">
+              {CHOICES.map(letter => (
+                <span key={letter} className={answerKeys[q.id] === letter ? "correct-tag" : ""}>
+                  {letter}. {q[`choice_${letter.toLowerCase()}`]} {answerKeys[q.id] === letter ? "✓" : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="qlist-actions">
+            <button className="btn-ghost btn-sm" onClick={() => handleEdit(q)}>แก้ไข</button>
+            <button className="btn-danger btn-sm" onClick={() => handleDelete(q.id)}>ลบ</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- แท็บ 2: อนุมัติ + ทีม ---------------- */
+function TeamsPanel({ teams, onChanged }) {
+  const [newTeamName, setNewTeamName] = useState("");
+  const addTeam = async () => {
+    if (!newTeamName.trim()) return;
+    await supabase.from("teams").insert({ team_name: newTeamName.trim() });
+    setNewTeamName(""); onChanged();
+  };
+  const deleteTeam = async (id) => {
+    if (!window.confirm("ลบทีมนี้? ผู้เข้าแข่งขันในทีมจะกลายเป็นยังไม่มีทีม")) return;
+    await supabase.from("teams").delete().eq("id", id); onChanged();
+  };
+  return (
+    <div className="card">
+      <h2>จัดการทีม</h2>
+      <div className="team-add-row">
+        <input type="text" placeholder="ชื่อทีมใหม่" value={newTeamName} onChange={e => setNewTeamName(e.target.value)} onKeyDown={e => e.key === "Enter" && addTeam()} />
+        <button className="btn-primary" onClick={addTeam}>เพิ่มทีม</button>
+      </div>
+      <div>
+        {teams.length === 0 && <span className="sub">ยังไม่มีทีม</span>}
+        {teams.map(t => (
+          <span className="team-chip" key={t.id}>{t.team_name}<button className="btn-danger btn-sm" onClick={() => deleteTeam(t.id)}>ลบ</button></span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantsListPanel({ participants, teams, onChanged }) {
+  const [filter, setFilter] = useState("all");
+  const approve = async (id) => { await supabase.from("participants").update({ approved: true }).eq("id", id); onChanged(); };
+  const unapprove = async (id) => { await supabase.from("participants").update({ approved: false }).eq("id", id); onChanged(); };
+  const remove = async (id) => { if (!window.confirm("ลบผู้เข้าแข่งขันคนนี้?")) return; await supabase.from("participants").delete().eq("id", id); onChanged(); };
+  const setTeam = async (id, team_id) => { await supabase.from("participants").update({ team_id: team_id || null }).eq("id", id); onChanged(); };
+  const filtered = participants.filter(p => filter === "approved" ? p.approved : filter === "pending" ? !p.approved : true);
+  const pendingCount = participants.filter(p => !p.approved).length;
+
+  return (
+    <div className="card">
+      <h2>ผู้เข้าแข่งขัน</h2>
+      <p className="sub">ทั้งหมด {participants.length} คน · รออนุมัติ {pendingCount} คน</p>
+      <div className="filter-bar">
+        <button className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>ทั้งหมด</button>
+        <button className={`filter-btn ${filter === "pending" ? "active" : ""}`} onClick={() => setFilter("pending")}>รออนุมัติ</button>
+        <button className={`filter-btn ${filter === "approved" ? "active" : ""}`} onClick={() => setFilter("approved")}>อนุมัติแล้ว</button>
+      </div>
+      {filtered.length === 0 && <div className="empty-state">ไม่มีรายชื่อในหมวดนี้</div>}
+      {filtered.map(p => (
+        <div className="plist-item" key={p.id}>
+          <div className="plist-info">
+            <div className="plist-name">{p.first_name} {p.last_name}</div>
+            <div className="plist-code">รหัส: {p.code}</div>
+            {p.approved && !p.team_id && teams.length > 0 && <div className="no-team-warning">⚠ ยังไม่ได้จัดทีม</div>}
+          </div>
+          <span className={`status-badge ${p.approved ? "status-approved" : "status-pending"}`}>{p.approved ? "อนุมัติแล้ว" : "รออนุมัติ"}</span>
+          <select value={p.team_id || ""} onChange={e => setTeam(p.id, e.target.value)}>
+            <option value="">ไม่มีทีม</option>
+            {teams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
+          </select>
+          <div style={{ display: "flex", gap: 8 }}>
+            {p.approved ? <button className="btn-ghost btn-sm" onClick={() => unapprove(p.id)}>ยกเลิกอนุมัติ</button> : <button className="btn-approve btn-sm" onClick={() => approve(p.id)}>อนุมัติ</button>}
+            <button className="btn-danger btn-sm" onClick={() => remove(p.id)}>ลบ</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ParticipantsTab() {
+  const [participants, setParticipants] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const loadAll = async () => {
+    setLoading(true);
+    const { data: pData } = await supabase.from("participants").select("*").order("created_at", { ascending: true });
+    const { data: tData } = await supabase.from("teams").select("*").order("team_name", { ascending: true });
+    setParticipants(pData || []); setTeams(tData || []); setLoading(false);
+  };
+  useEffect(() => { loadAll(); }, []);
+  return (
+    <div>
+      <h2 style={{ marginBottom: 4 }}>✅ อนุมัติผู้เข้าแข่งขัน</h2>
+      <p className="sub">จัดการรายชื่อและทีมก่อนวันแข่งขัน</p>
+      {loading ? <p className="sub">กำลังโหลด...</p> : (
+        <React.Fragment>
+          <TeamsPanel teams={teams} onChanged={loadAll} />
+          <ParticipantsListPanel participants={participants} teams={teams} onChanged={loadAll} />
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- แท็บ 3: ควบคุมการแข่งขัน (+ พรีวิวจอโปรเจกเตอร์) ---------------- */
+function ControlTab() {
+  const [session, setSession] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [submitCount, setSubmitCount] = useState(0);
+  const [busy, setBusy] = useState(false);
+
+  const loadQuestions = async () => {
+    const { data } = await supabase.from("questions").select("id,question_no,question_text").order("question_no", { ascending: true });
+    setQuestions(data || []);
+  };
+  const loadSession = async () => {
+    const { data } = await supabase.from("session").select("*").eq("id", 1).single();
+    setSession(data);
+  };
+  useEffect(() => {
+    loadQuestions(); loadSession();
+    const channel = supabase.channel("admin-session-watch2")
+      .on("postgres_changes", { event: "*", schema: "public", table: "session" }, () => loadSession())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+  useEffect(() => {
+    if (!session || !session.current_question_no) { setSubmitCount(0); return; }
+    const currentQ = questions.find(q => q.question_no === session.current_question_no);
+    if (!currentQ) return;
+    const fetchCount = async () => {
+      const { count } = await supabase.from("submissions").select("id", { count: "exact", head: true }).eq("question_id", currentQ.id);
+      setSubmitCount(count || 0);
+    };
+    fetchCount();
+    const channel = supabase.channel("admin-submit-watch2-" + currentQ.id)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "submissions", filter: `question_id=eq.${currentQ.id}` }, () => fetchCount())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [session, questions]);
+
+  const goToQuestion = async (qno) => { setBusy(true); await supabase.rpc("admin_set_question", { p_question_no: qno }); setBusy(false); };
+  const finishQuiz = async () => {
+    if (!window.confirm("จบการแข่งขันตอนนี้เลยหรือไม่?")) return;
+    setBusy(true); await supabase.from("session").update({ status: "finished" }).eq("id", 1); setBusy(false);
+  };
+  const resetSession = async () => {
+    if (!window.confirm("รีเซ็ตกลับไปหน้ารอเริ่ม?")) return;
+    setBusy(true);
+    await supabase.from("session").update({ status: "waiting", current_question_no: null, question_started_at: null }).eq("id", 1);
+    setBusy(false);
+  };
+
+  if (!session) return <p className="sub">กำลังโหลด...</p>;
+  const currentQ = questions.find(q => q.question_no === session.current_question_no);
+  const nextQno = session.current_question_no ? session.current_question_no + 1 : 1;
+  const hasNext = questions.some(q => q.question_no === nextQno);
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: 4 }}>🎮 ควบคุมการแข่งขัน</h2>
+      <p className="sub">กดเริ่ม/เปลี่ยนข้อ — ทุกจอจะซิงค์ตามอัตโนมัติ</p>
+      <div className="card">
+        <div className="status-row">
+          <span className={`status-pill status-${session.status}`}>
+            {session.status === "waiting" && "รอเริ่ม"}
+            {session.status === "live" && "กำลังแข่งขัน"}
+            {session.status === "finished" && "จบการแข่งขันแล้ว"}
+          </span>
+          <span className="sub" style={{ margin: 0 }}>ทั้งหมด {questions.length} ข้อ</span>
+        </div>
+        {currentQ ? (
+          <div className="q-display">
+            <div className="q-no">ข้อที่ {currentQ.question_no}</div>
+            <div className="q-text">{currentQ.question_text}</div>
+            <div className="submit-count">ตอบแล้ว {submitCount} คน</div>
+          </div>
+        ) : <div className="q-display"><div className="q-text">ยังไม่ได้เริ่มข้อคำถาม</div></div>}
+        <div className="controls">
+          {!currentQ && <button className="btn-primary" disabled={busy || questions.length === 0} onClick={() => goToQuestion(1)}>เริ่มข้อที่ 1</button>}
+          {currentQ && hasNext && <button className="btn-primary" disabled={busy} onClick={() => goToQuestion(nextQno)}>ข้อถัดไป (ข้อ {nextQno})</button>}
+          {currentQ && !hasNext && <button className="btn-primary" disabled={busy} onClick={finishQuiz}>จบการแข่งขัน (ข้อสุดท้ายแล้ว)</button>}
+          {currentQ && <button className="btn-danger" disabled={busy} onClick={finishQuiz}>จบตอนนี้เลย</button>}
+          {session.status !== "waiting" && <button className="btn-ghost" disabled={busy} onClick={resetSession}>รีเซ็ตกลับหน้ารอ</button>}
+        </div>
+      </div>
+
+      <div className="card">
+        <h2 style={{ fontSize: 15 }}>📽️ พรีวิวจอโปรเจกเตอร์</h2>
+        <p className="sub" style={{ marginBottom: 0 }}>หน้าตาที่จอกลางกำลังฉายอยู่ตอนนี้ (เปิด projector.html เต็มจอบนเครื่องที่ต่อโปรเจกเตอร์จริง)</p>
+        <div className="projector-preview">
+          <iframe src="projector.html" title="พรีวิวจอโปรเจกเตอร์"></iframe>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2 style={{ fontSize: 15 }}>รายการคำถามทั้งหมด</h2>
+        <div className="qlist">
+          {questions.map(q => (
+            <div className={`qlist-row ${session.current_question_no === q.question_no ? "current" : ""}`} key={q.id}>
+              <span>ข้อ {q.question_no}: {q.question_text.slice(0, 50)}{q.question_text.length > 50 ? "..." : ""}</span>
+              <button className="btn-ghost btn-sm" disabled={busy} onClick={() => goToQuestion(q.question_no)}>ไปข้อนี้</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- แท็บ 4: วิเคราะห์ข้อมูล ---------------- */
+function ReviewTab() {
+  const [participants, setParticipants] = useState([]);
+  const [questionNos, setQuestionNos] = useState([]);
+  const [perQuestion, setPerQuestion] = useState({});
+  const [scores, setScores] = useState({});
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    const { data: participantsData } = await supabase.from("participants").select("id, code, first_name, last_name").eq("approved", true);
+    const { data: questions } = await supabase.from("questions").select("id, question_no").order("question_no", { ascending: true });
+    const { data: submissions } = await supabase.from("submissions").select("participant_id, question_id, is_correct, score");
+    const qnoByQid = {};
+    (questions || []).forEach(q => { qnoByQid[q.id] = q.question_no; });
+    const perQ = {}; const scoreMap = {};
+    (submissions || []).forEach(s => {
+      const qno = qnoByQid[s.question_id];
+      if (!perQ[s.participant_id]) perQ[s.participant_id] = {};
+      if (qno != null) perQ[s.participant_id][qno] = s.is_correct;
+      scoreMap[s.participant_id] = (scoreMap[s.participant_id] || 0) + (s.score || 0);
+    });
+    setParticipants(participantsData || []);
+    setQuestionNos((questions || []).map(q => q.question_no));
+    setPerQuestion(perQ); setScores(scoreMap); setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const filtered = useMemo(() => {
+    const list = participants.filter(p => !search.trim() || p.code.toLowerCase().includes(search.toLowerCase()) || `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase()));
+    return list.sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+  }, [participants, search, scores]);
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: 4 }}>📊 วิเคราะห์ข้อมูล</h2>
+      <p className="sub">ใครตอบถูก/ผิดข้อไหนบ้าง</p>
+      <div className="card">
+        {loading ? <p className="sub">กำลังโหลด...</p> : questionNos.length === 0 ? <div className="empty-state">ยังไม่มีคำถามในระบบ</div> : participants.length === 0 ? <div className="empty-state">ยังไม่มีผู้เข้าแข่งขันที่อนุมัติแล้ว</div> : (
+          <React.Fragment>
+            <div className="search-row">
+              <input type="text" placeholder="ค้นหาชื่อหรือรหัส..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 280, marginBottom: 0 }} />
+            </div>
+            <div className="matrix-scroll">
+              <table>
+                <thead><tr><th className="name-col">ชื่อ</th><th>คะแนน</th>{questionNos.map(n => <th key={n}>{n}</th>)}</tr></thead>
+                <tbody>
+                  {filtered.map(p => {
+                    const row = perQuestion[p.id] || {};
+                    return (
+                      <tr key={p.id}>
+                        <td className="name-col">{p.first_name} {p.last_name}<br /><span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>{p.code}</span></td>
+                        <td className="row-score">{scores[p.id] || 0}</td>
+                        {questionNos.map(n => {
+                          const v = row[n];
+                          const cls = v === true ? "cell-correct" : v === false ? "cell-wrong" : "cell-none";
+                          return <td key={n} className={cls}>{v === true ? "✓" : v === false ? "✗" : "–"}</td>;
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </React.Fragment>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- แท็บ 5: เริ่มรอบใหม่ ---------------- */
+function csvEscape(val) {
+  const s = String(val == null ? "" : val);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function downloadCsv(filename, rows) {
+  const csvContent = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function ResetTab() {
+  const [stats, setStats] = useState(null);
+  const [confirmText, setConfirmText] = useState("");
+  const [exported, setExported] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadStats = async () => {
+    const { count: pCount } = await supabase.from("participants").select("id", { count: "exact", head: true });
+    const { count: qCount } = await supabase.from("questions").select("id", { count: "exact", head: true });
+    setStats({ participants: pCount || 0, questions: qCount || 0 });
+  };
+  useEffect(() => { loadStats(); }, []);
+
+  const exportResults = async () => {
+    setBusy(true); setError("");
+    const { data: participants } = await supabase.from("participants").select("id, code, first_name, last_name, team_id");
+    const { data: teams } = await supabase.from("teams").select("id, team_name");
+    const { data: questions } = await supabase.from("questions").select("id, question_no").order("question_no", { ascending: true });
+    const { data: submissions } = await supabase.from("submissions").select("participant_id, question_id, score, response_time_ms, is_correct");
+    const teamMap = {}; (teams || []).forEach(t => { teamMap[t.id] = t.team_name; });
+    const qnoByQid = {}; (questions || []).forEach(q => { qnoByQid[q.id] = q.question_no; });
+    const questionNos = (questions || []).map(q => q.question_no);
+    const agg = {}; const perQuestion = {};
+    (submissions || []).forEach(s => {
+      if (!agg[s.participant_id]) agg[s.participant_id] = { score: 0, time: 0, correct: 0 };
+      agg[s.participant_id].score += s.score || 0;
+      agg[s.participant_id].time += s.response_time_ms || 0;
+      if (s.is_correct) agg[s.participant_id].correct += 1;
+      if (!perQuestion[s.participant_id]) perQuestion[s.participant_id] = {};
+      const qno = qnoByQid[s.question_id];
+      if (qno != null) perQuestion[s.participant_id][qno] = s.is_correct ? "✓" : "✗";
+    });
+    const rows = (participants || []).map(p => {
+      const a = agg[p.id] || { score: 0, time: 0, correct: 0 };
+      return { id: p.id, code: p.code, name: `${p.first_name} ${p.last_name}`, team: teamMap[p.team_id] || "", score: a.score, correct: a.correct, time: a.time };
+    }).sort((x, y) => (y.score - x.score) || (x.time - y.time));
+    const summaryRows = [["อันดับ", "รหัส", "ชื่อ-นามสกุล", "ทีม", "คะแนนรวม", "ตอบถูก", "เวลารวม (ms)"]];
+    rows.forEach((r, i) => summaryRows.push([i + 1, r.code, r.name, r.team, r.score, r.correct, r.time]));
+    const matrixHeader = ["รหัส", "ชื่อ-นามสกุล", ...questionNos.map(n => `ข้อ ${n}`)];
+    const matrixRows = [matrixHeader];
+    rows.forEach(r => { const perQ = perQuestion[r.id] || {}; matrixRows.push([r.code, r.name, ...questionNos.map(n => perQ[n] || "–")]); });
+    const dateStr = new Date().toISOString().slice(0, 10);
+    downloadCsv(`anatomy-quiz-results-${dateStr}.csv`, summaryRows);
+    downloadCsv(`anatomy-quiz-answers-detail-${dateStr}.csv`, matrixRows);
+    setExported(true); setBusy(false);
+  };
+
+  const deleteAllTable = async (table, idCol) => { await supabase.from(table).delete().not(idCol, "is", null); };
+  const handleReset = async () => {
+    if (confirmText !== CONFIRM_WORD) return;
+    setBusy(true); setError("");
+    try {
+      await deleteAllTable("submissions", "id");
+      await deleteAllTable("answer_keys", "question_id");
+      await deleteAllTable("questions", "id");
+      await deleteAllTable("participants", "id");
+      await deleteAllTable("teams", "id");
+      await supabase.from("session").update({ status: "waiting", current_question_no: null, question_started_at: null }).eq("id", 1);
+      setDone(true);
+    } catch (e) { setError("เกิดข้อผิดพลาดระหว่างล้างข้อมูล: " + e.message); }
+    setBusy(false);
+  };
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: 4 }}>🔄 เริ่มรอบการแข่งขันใหม่</h2>
+      <p className="sub">Export ผล + ล้างข้อมูลสำหรับรอบถัดไป</p>
+      {done ? (
+        <div className="card">
+          <div className="success-msg">✓ ล้างข้อมูลเรียบร้อยแล้ว พร้อมสำหรับรอบการแข่งขันใหม่</div>
+          <p className="sub">ไปที่แท็บ "จัดการคำถาม" เพื่อเริ่มใส่คำถามชุดใหม่ได้เลย</p>
+        </div>
+      ) : (
+        <React.Fragment>
+          <div className="card">
+            <div className="step-title">สถานะข้อมูลปัจจุบัน</div>
+            {stats && <div className="stat-row"><span>ผู้เข้าแข่งขัน: {stats.participants} คน</span><span>คำถาม: {stats.questions} ข้อ</span></div>}
+          </div>
+          <div className="card">
+            <div className="step-title">ขั้นที่ 1: Export ผลการแข่งขัน</div>
+            <p className="step-desc">ดาวน์โหลด 2 ไฟล์: สรุปคะแนน+อันดับ และตารางถูก/ผิดรายข้อ แนะนำให้ export ก่อนเริ่มรอบใหม่เสมอ</p>
+            <button className="btn-primary" onClick={exportResults} disabled={busy}>{busy && !exported ? "กำลัง export..." : "Export CSV"}</button>
+            {exported && <p className="success-msg" style={{ marginTop: 12 }}>✓ ดาวน์โหลดไฟล์แล้ว</p>}
+          </div>
+          <div className="card">
+            <div className="step-title" style={{ color: "var(--danger)" }}>ขั้นที่ 2: ล้างข้อมูลทั้งหมด</div>
+            <div className="warning-box">การกระทำนี้จะลบผู้เข้าแข่งขัน คำถาม เฉลย คำตอบ ทีม ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้{!exported && " แนะนำให้ export ก่อน"}</div>
+            <label>พิมพ์คำว่า "{CONFIRM_WORD}" เพื่อยืนยัน</label>
+            <input type="text" value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder={CONFIRM_WORD} />
+            {error && <div className="warning-box">{error}</div>}
+            <button className="btn-danger" disabled={confirmText !== CONFIRM_WORD || busy} onClick={handleReset}>{busy ? "กำลังล้างข้อมูล..." : "ล้างข้อมูลทั้งหมด"}</button>
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- โครงหลัก ---------------- */
+const TABS = [
+  { key: "questions", label: "🦴 คำถาม" },
+  { key: "participants", label: "✅ ผู้เข้าแข่งขัน" },
+  { key: "control", label: "🎮 ควบคุม" },
+  { key: "review", label: "📊 วิเคราะห์" },
+  { key: "reset", label: "🔄 เริ่มรอบใหม่" },
+];
+
+function Dashboard() {
+  const [tab, setTab] = useState("questions");
+  return (
+    <div>
+      <div className="tabs">
+        {TABS.map(t => <button key={t.key} className={`tab-btn ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>)}
+      </div>
+      {tab === "questions" && <QuestionsTab />}
+      {tab === "participants" && <ParticipantsTab />}
+      {tab === "control" && <ControlTab />}
+      {tab === "review" && <ReviewTab />}
+      {tab === "reset" && <ResetTab />}
+    </div>
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setChecking(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+  if (checking) return <div className="wrap"><p className="sub">กำลังตรวจสอบสิทธิ์...</p></div>;
+  if (!session) return <div className="wrap"><LoginBox onLoggedIn={setSession} /></div>;
+  return (
+    <div className="wrap">
+      <div className="top-nav">
+        <a className="back-link" href="index.html">← กลับหน้าแรก</a>
+        <button className="btn-ghost btn-sm" onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
+      </div>
+      <Dashboard />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
