@@ -14,6 +14,8 @@
     margin: 0; font-family: -apple-system,"Segoe UI","Noto Sans Thai",sans-serif;
     background: #fff8f3; color: #4a3540; min-height: 100vh;
   }
+  body.themed { background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed; }
+  body.themed .card { background: rgba(255,255,255,0.94); }
   .wrap { max-width: 480px; margin: 0 auto; padding: 24px 18px 60px; }
   .back-link { display: inline-block; font-size: 13px; color: #9b8790; text-decoration: none; margin-bottom: 16px; }
   .card { background: #fff; border: 1px solid #f5dfe6; border-radius: 22px; padding: 24px; box-shadow: 0 3px 14px rgba(74,53,64,0.06); }
@@ -273,6 +275,25 @@ function StartTab() {
 
 function App() {
   const [tab, setTab] = useState("register");
+
+  useEffect(() => {
+    const applyTheme = async () => {
+      const { data } = await supabase.from("session").select("theme_image_url").eq("id", 1).single();
+      if (data && data.theme_image_url) {
+        document.body.classList.add("themed");
+        document.body.style.backgroundImage = `url(${data.theme_image_url})`;
+      } else {
+        document.body.classList.remove("themed");
+        document.body.style.backgroundImage = "";
+      }
+    };
+    applyTheme();
+    const channel = supabase.channel("participant-theme-watch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "session" }, () => applyTheme())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   return (
     <div className="wrap">
       <a className="back-link" href="index.html">← กลับหน้าแรก</a>

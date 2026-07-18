@@ -383,6 +383,56 @@ function ParticipantsTab() {
 }
 
 /* ---------------- แท็บ 3: ควบคุมการแข่งขัน (+ พรีวิวจอโปรเจกเตอร์) ---------------- */
+function ThemeSettings({ session, onChanged }) {
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSave = async () => {
+    if (!imageFile) return;
+    setUploading(true); setError("");
+    const fileExt = imageFile.name.split(".").pop();
+    const fileName = `theme-${Date.now()}.${fileExt}`;
+    const { error: uploadErr } = await supabase.storage.from("question-images").upload(fileName, imageFile);
+    if (uploadErr) { setError("อัปโหลดไม่สำเร็จ: " + uploadErr.message); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("question-images").getPublicUrl(fileName);
+    await supabase.from("session").update({ theme_image_url: urlData.publicUrl }).eq("id", 1);
+    setImageFile(null); setUploading(false);
+    onChanged();
+  };
+
+  const handleRemove = async () => {
+    setUploading(true);
+    await supabase.from("session").update({ theme_image_url: null }).eq("id", 1);
+    setUploading(false);
+    onChanged();
+  };
+
+  return (
+    <div className="card">
+      <h2 style={{ fontSize: 15 }}>🎨 ธีมพื้นหลัง</h2>
+      <p className="sub" style={{ marginBottom: 12 }}>อัปโหลดรูปพื้นหลังธีมของรอบนี้ (จะขึ้นทั้งจอโปรเจกเตอร์และมือถือเด็ก)</p>
+      {error && <div className="error-msg">{error}</div>}
+      {session && session.theme_image_url && (
+        <div style={{ marginBottom: 14 }}>
+          <img src={session.theme_image_url} alt="ธีมปัจจุบัน" style={{ width: "100%", maxWidth: 320, borderRadius: 14, border: "1px solid var(--line)" }} />
+        </div>
+      )}
+      <div className="img-upload-row">
+        <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} />
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button className="btn-primary" onClick={handleSave} disabled={uploading || !imageFile}>
+          {uploading ? "กำลังบันทึก..." : "บันทึกธีมใหม่"}
+        </button>
+        {session && session.theme_image_url && (
+          <button className="btn-ghost" onClick={handleRemove} disabled={uploading}>ลบธีม (ใช้ค่าเริ่มต้น)</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ControlTab() {
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -464,6 +514,8 @@ function ControlTab() {
           {session.status !== "waiting" && <button className="btn-ghost" disabled={busy} onClick={resetSession}>รีเซ็ตกลับหน้ารอ</button>}
         </div>
       </div>
+
+      <ThemeSettings session={session} onChanged={loadSession} />
 
       <div className="card">
         <h2 style={{ fontSize: 15 }}>📽️ พรีวิวจอโปรเจกเตอร์</h2>
