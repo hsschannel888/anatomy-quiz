@@ -494,26 +494,38 @@ function ReviewTab() {
   const [questionNos, setQuestionNos] = useState([]);
   const [perQuestion, setPerQuestion] = useState({});
   const [scores, setScores] = useState({});
+  const [hardestQuestions, setHardestQuestions] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     const { data: participantsData } = await supabase.from("participants").select("id, code, first_name, last_name").eq("approved", true);
-    const { data: questions } = await supabase.from("questions").select("id, question_no").order("question_no", { ascending: true });
+    const { data: questions } = await supabase.from("questions").select("id, question_no, question_text").order("question_no", { ascending: true });
     const { data: submissions } = await supabase.from("submissions").select("participant_id, question_id, is_correct, score");
-    const qnoByQid = {};
-    (questions || []).forEach(q => { qnoByQid[q.id] = q.question_no; });
-    const perQ = {}; const scoreMap = {};
+    const qnoByQid = {}; const qtextByQid = {};
+    (questions || []).forEach(q => { qnoByQid[q.id] = q.question_no; qtextByQid[q.id] = q.question_text; });
+    const perQ = {}; const scoreMap = {}; const wrongCount = {}; const answeredCount = {};
     (submissions || []).forEach(s => {
       const qno = qnoByQid[s.question_id];
       if (!perQ[s.participant_id]) perQ[s.participant_id] = {};
       if (qno != null) perQ[s.participant_id][qno] = s.is_correct;
       scoreMap[s.participant_id] = (scoreMap[s.participant_id] || 0) + (s.score || 0);
+      answeredCount[s.question_id] = (answeredCount[s.question_id] || 0) + 1;
+      if (!s.is_correct) wrongCount[s.question_id] = (wrongCount[s.question_id] || 0) + 1;
     });
+    const hardest = Object.entries(wrongCount)
+      .map(([qid, count]) => ({
+        question_no: qnoByQid[qid],
+        question_text: qtextByQid[qid] || "",
+        wrong: count,
+        total: answeredCount[qid] || 0,
+      }))
+      .sort((a, b) => b.wrong - a.wrong)
+      .slice(0, 5);
     setParticipants(participantsData || []);
     setQuestionNos((questions || []).map(q => q.question_no));
-    setPerQuestion(perQ); setScores(scoreMap); setLoading(false);
+    setPerQuestion(perQ); setScores(scoreMap); setHardestQuestions(hardest); setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -526,6 +538,21 @@ function ReviewTab() {
     <div>
       <h2 style={{ marginBottom: 4 }}>📊 วิเคราะห์ข้อมูล</h2>
       <p className="sub">ใครตอบถูก/ผิดข้อไหนบ้าง</p>
+
+      {!loading && hardestQuestions.length > 0 && (
+        <div className="card">
+          <h2 style={{ fontSize: 15 }}>🔥 5 อันดับข้อที่ตอบผิดเยอะที่สุด</h2>
+          {hardestQuestions.map((q, i) => (
+            <div key={q.question_no} className="qlist-row" style={{ alignItems: "flex-start", padding: "10px" }}>
+              <span style={{ flex: 1 }}>
+                <strong>#{i + 1} · ข้อ {q.question_no}</strong> — {q.question_text}
+              </span>
+              <span className="cell-wrong" style={{ flexShrink: 0, marginLeft: 12 }}>ผิด {q.wrong}/{q.total} คน</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="card">
         {loading ? <p className="sub">กำลังโหลด...</p> : questionNos.length === 0 ? <div className="empty-state">ยังไม่มีคำถามในระบบ</div> : participants.length === 0 ? <div className="empty-state">ยังไม่มีผู้เข้าแข่งขันที่อนุมัติแล้ว</div> : (
           <React.Fragment>

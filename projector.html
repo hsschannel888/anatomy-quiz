@@ -87,6 +87,45 @@ function Leaderboard({ title }) {
   );
 }
 
+function HardestQuestions() {
+  const [rows, setRows] = useState([]);
+
+  const load = async () => {
+    const { data: questions } = await supabase.from("questions").select("id, question_no, question_text");
+    const { data: subs } = await supabase.from("submissions").select("question_id, is_correct");
+    const qMap = {};
+    (questions || []).forEach(q => { qMap[q.id] = q; });
+    const wrongCount = {}; const totalCount = {};
+    (subs || []).forEach(s => {
+      totalCount[s.question_id] = (totalCount[s.question_id] || 0) + 1;
+      if (!s.is_correct) wrongCount[s.question_id] = (wrongCount[s.question_id] || 0) + 1;
+    });
+    const ranked = Object.entries(wrongCount)
+      .map(([qid, count]) => ({ ...qMap[qid], wrong: count, total: totalCount[qid] || 0 }))
+      .filter(r => r.question_no != null)
+      .sort((a, b) => b.wrong - a.wrong)
+      .slice(0, 5);
+    setRows(ranked);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="leaderboard" style={{ marginTop: 32 }}>
+      <div className="lb-title">🔥 ข้อที่พลาดกันเยอะที่สุด</div>
+      {rows.map((r, i) => (
+        <div className="lb-row" key={r.question_no}>
+          <span className="lb-rank">{i + 1}</span>
+          <span className="lb-name">ข้อ {r.question_no}: {r.question_text}</span>
+          <span className="lb-score">ผิด {r.wrong}/{r.total}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [session, setSession] = useState(null);
   const [question, setQuestion] = useState(null);
@@ -132,6 +171,7 @@ function App() {
       <div className="stage">
         <div className="finished-title">🏆✨ ผลการแข่งขัน ✨🏆</div>
         <Leaderboard title="อันดับสุดท้าย" />
+        <HardestQuestions />
       </div>
     );
   }
