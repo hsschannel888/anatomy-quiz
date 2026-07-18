@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ตอบคำถาม - Anatomy Quick Quiz</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system,"Segoe UI","Noto Sans Thai",sans-serif;
+    background: #fff8f3; color: #4a3540; min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 18px 60px; }
+  .card { background: #fff; border: 1px solid #f5dfe6; border-radius: 22px; box-shadow: 0 3px 14px rgba(74,53,64,0.06); padding: 24px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-align: center; }
+  .sub { color: #9b8790; font-size: 14px; text-align: center; margin: 0 0 22px; }
+  label { display: block; font-size: 13px; color: #9b8790; margin-bottom: 6px; font-weight: 500; }
+  input[type=text] { width: 100%; padding: 12px 14px; border: 1px solid #f5dfe6; border-radius: 16px; font-size: 15px; margin-bottom: 16px; }
+  button.primary { width: 100%; background: #16b897; color: #fff; font-weight: 600; font-size: 15px; border: none; border-radius: 8px; padding: 13px; cursor: pointer; }
+  button.primary:disabled { background: #a9b4ae; }
+  .error-msg { background: #ffe8e8; color: #ef6f6f; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+  .pending-box { text-align: center; padding: 40px 10px; }
+  .pending-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .pending-text { color: #9b8790; font-size: 14px; }
+  .top-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .greet { font-size: 14px; color: #9b8790; }
+  .my-score { font-size: 16px; font-weight: 700; color: #16b897; }
+  .status-title { text-align: center; font-size: 20px; font-weight: 600; margin: 40px 0 8px; }
+  .status-sub { text-align: center; color: #9b8790; font-size: 14px; }
+  .q-no-badge { text-align: center; font-size: 13px; color: #9b8790; margin-bottom: 6px; }
+  .timer-badge { text-align: center; font-size: 40px; font-weight: 700; margin-bottom: 24px; }
+  .timer-badge.low { color: #d85a30; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .choice-btn {
+    aspect-ratio: 1; border-radius: 24px; border: none; font-size: 34px; font-weight: 700; color: #fff; cursor: pointer;
+  }
+  .choice-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .choice-a { background: #378ADD; }
+  .choice-b { background: #D85A30; }
+  .choice-c { background: #639922; }
+  .choice-d { background: #D4537E; }
+  .choice-btn.picked { outline: 5px solid #16b897; outline-offset: -5px; }
+  .answered-box { text-align: center; padding: 50px 10px; }
+  .answered-icon { font-size: 48px; margin-bottom: 12px; }
+  .answered-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .answered-sub { color: #9b8790; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const QUESTION_SECONDS = 30;
+const STORAGE_KEY = "anatomy_quiz_participant";
+
+function CodeEntry({ onIdentified }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!code.trim()) { setError("กรอกรหัสประจำตัว"); return; }
+    setLoading(true);
+    const { data, error: err } = await supabase.from("participants").select("*").eq("code", code.trim()).maybeSingle();
+    setLoading(false);
+    if (err || !data) { setError("ไม่พบรหัสนี้ในระบบ"); return; }
+    if (!data.approved) { setError("รหัสนี้ยังไม่ได้รับการอนุมัติ กรุณาติดต่อเจ้าหน้าที่"); return; }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: data.id, name: `${data.first_name} ${data.last_name}` }));
+    onIdentified({ id: data.id, name: `${data.first_name} ${data.last_name}` });
+  };
+
+  return (
+    <div className="wrap">
+      <div className="card">
+        <h1>🎯 เข้าสู่การแข่งขัน</h1>
+        <p className="sub">Anatomy Quick Quiz</p>
+        {error && <div className="error-msg">{error}</div>}
+        <label>รหัสประจำตัว</label>
+        <input type="text" value={code} onChange={e => setCode(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="กรอกรหัสของคุณ" />
+        <button className="primary" onClick={handleSubmit} disabled={loading}>
+          {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QuizArea({ participant }) {
+  const [session, setSession] = useState(null);
+  const [question, setQuestion] = useState(null);
+  const [secondsLeft, setSecondsLeft] = useState(QUESTION_SECONDS);
+  const [answeredQno, setAnsweredQno] = useState(null);
+  const [pickedChoice, setPickedChoice] = useState(null);
+  const [totalScore, setTotalScore] = useState(0);
+  const tickRef = useRef(null);
+
+  const loadSession = async () => {
+    const { data } = await supabase.from("session").select("*").eq("id", 1).single();
+    setSession(data);
+  };
+  const loadMyScore = async () => {
+    const { data } = await supabase.from("submissions").select("score").eq("participant_id", participant.id);
+    setTotalScore((data || []).reduce((sum, s) => sum + (s.score || 0), 0));
+  };
+
+  useEffect(() => {
+    loadSession();
+    loadMyScore();
+    const channel = supabase.channel("participant-session-watch")
+      .on("postgres_changes", { event: "*", schema: "public", table: "session" }, () => loadSession())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  useEffect(() => {
+    if (!session || !session.current_question_no) { setQuestion(null); return; }
+    supabase.from("questions").select("id,question_no").eq("question_no", session.current_question_no).single()
+      .then(({ data }) => setQuestion(data));
+    setPickedChoice(null);
+  }, [session && session.current_question_no]);
+
+  useEffect(() => {
+    clearInterval(tickRef.current);
+    if (!session || !session.question_started_at) return;
+    const started = new Date(session.question_started_at).getTime();
+    const update = () => {
+      const elapsed = (Date.now() - started) / 1000;
+      setSecondsLeft(Math.max(0, Math.ceil(QUESTION_SECONDS - elapsed)));
+    };
+    update();
+    tickRef.current = setInterval(update, 250);
+    return () => clearInterval(tickRef.current);
+  }, [session && session.question_started_at]);
+
+  const submitAnswer = async (choice) => {
+    if (!question || pickedChoice) return;
+    setPickedChoice(choice);
+    const { error } = await supabase.rpc("submit_answer", {
+      p_participant_id: participant.id,
+      p_question_id: question.id,
+      p_choice: choice,
+    });
+    if (!error) {
+      setAnsweredQno(question.question_no);
+      loadMyScore();
+    }
+  };
+
+  if (!session) return <div className="wrap"><p className="sub">กำลังโหลด...</p></div>;
+
+  if (session.status === "finished") {
+    return (
+      <div className="wrap">
+        <div className="status-title">🎊 จบการแข่งขัน 🎊</div>
+        <div className="status-sub">คะแนนรวมของคุณ: {totalScore} คะแนน</div>
+      </div>
+    );
+  }
+
+  if (session.status === "waiting" || !question) {
+    return (
+      <div className="wrap">
+        <div className="top-info">
+          <span className="greet">สวัสดี {participant.name}</span>
+        </div>
+        <div className="status-title">🕐 รอเริ่มการแข่งขัน</div>
+        <div className="status-sub">มองไปที่จอโปรเจกเตอร์ด้านหน้า</div>
+      </div>
+    );
+  }
+
+  const alreadyAnswered = pickedChoice || answeredQno === question.question_no;
+
+  if (secondsLeft <= 0 || alreadyAnswered) {
+    return (
+      <div className="wrap">
+        <div className="top-info">
+          <span className="greet">{participant.name}</span>
+          <span className="my-score">{totalScore} คะแนน</span>
+        </div>
+        <div className="answered-box">
+          <div className="answered-icon">{alreadyAnswered ? "✓" : "⏰"}</div>
+          <div className="answered-title">{alreadyAnswered ? "✓ ส่งคำตอบแล้ว เก่งมาก!" : "หมดเวลา"}</div>
+          <div className="answered-sub">รอข้อถัดไปจากหน้าจอโปรเจกเตอร์</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrap">
+      <div className="top-info">
+        <span className="greet">{participant.name}</span>
+        <span className="my-score">{totalScore} คะแนน</span>
+      </div>
+      <div className="q-no-badge">ข้อที่ {question.question_no}</div>
+      <div className={`timer-badge ${secondsLeft <= 10 ? "low" : ""}`}>{secondsLeft}</div>
+      <div className="choices">
+        <button className="choice-btn choice-a" onClick={() => submitAnswer("A")}>A</button>
+        <button className="choice-btn choice-b" onClick={() => submitAnswer("B")}>B</button>
+        <button className="choice-btn choice-c" onClick={() => submitAnswer("C")}>C</button>
+        <button className="choice-btn choice-d" onClick={() => submitAnswer("D")}>D</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [participant, setParticipant] = useState(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { setParticipant(JSON.parse(saved)); } catch (e) {}
+    }
+    setChecked(true);
+  }, []);
+
+  if (!checked) return null;
+  if (!participant) return <CodeEntry onIdentified={setParticipant} />;
+  return <QuizArea participant={participant} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

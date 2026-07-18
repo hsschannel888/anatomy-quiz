@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anatomy Quick Quiz - อนุมัติผู้เข้าแข่งขัน</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #4a3540;
+    --ink-soft: #9b8790;
+    --line: #f5dfe6;
+    --bg: #fff8f3;
+    --card: #ffffff;
+    --accent: #16b897;
+    --accent-soft: #d9f5ec;
+    --danger: #ef6f6f;
+    --danger-soft: #ffe8e8;
+    --warn: #f0a44c;
+    --warn-soft: #fff1de;
+    --radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0 0 14px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 20px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  input[type=text] {
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  select {
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 14px;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #119b81; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn-ghost:hover { border-color: var(--ink-soft); }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); }
+  .btn-danger:hover { background: #eedada; }
+  .btn-approve { background: var(--accent-soft); color: var(--accent); }
+  .btn-approve:hover { background: #d6e6da; }
+  .team-add-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .team-add-row input { flex: 1; }
+  .team-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 20px;
+    padding: 6px 8px 6px 14px; margin: 0 8px 8px 0; font-size: 13px;
+  }
+  .team-chip button { padding: 2px 8px; font-size: 12px; }
+  .plist-item {
+    display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px;
+  }
+  .plist-info { flex: 1; min-width: 0; }
+  .plist-name { font-size: 14px; font-weight: 500; }
+  .plist-code { font-size: 12px; color: var(--ink-soft); }
+  .status-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+  .status-approved { background: var(--accent-soft); color: var(--accent); }
+  .status-pending { background: var(--warn-soft); color: var(--warn); }
+  .no-team-warning { font-size: 11px; color: var(--warn); margin-top: 2px; }
+  .plist-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .empty-state { text-align: center; padding: 30px 20px; color: var(--ink-soft); font-size: 14px; }
+  .tab-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .login-box { max-width: 360px; margin: 80px auto 0; }
+  label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 500; }
+  .login-box input { width: 100%; margin-bottom: 14px; padding: 10px 12px; }
+  .error-msg { background: var(--danger-soft); color: var(--danger); padding: 10px 14px; border-radius: 14px; font-size: 13px; margin-bottom: 14px; }
+  .count-badge { font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; }
+
+  .btn-primary, button.primary { border-radius: 999px !important; box-shadow: 0 3px 10px rgba(22,184,151,0.25); }
+  .card { box-shadow: 0 3px 14px rgba(74,53,64,0.06); }
+  h1 { letter-spacing: -0.2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function LoginBox({ onLoggedIn }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (err) { setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); return; }
+    onLoggedIn(data.session);
+  };
+
+  return (
+    <div className="login-box">
+      <div className="card">
+        <h1>🔐 เข้าสู่ระบบแอดมิน</h1>
+        <p className="sub">Anatomy Quick Quiz</p>
+        {error && <div className="error-msg">{error}</div>}
+        <label>อีเมล</label>
+        <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+        <label>รหัสผ่าน</label>
+        <input type="text" value={password} onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleLogin()}
+          style={{ WebkitTextSecurity: "disc" }} />
+        <button className="btn-primary" onClick={handleLogin} disabled={loading} style={{ width: "100%" }}>
+          {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TeamsPanel({ teams, onChanged }) {
+  const [newTeamName, setNewTeamName] = useState("");
+  const [error, setError] = useState("");
+
+  const addTeam = async () => {
+    if (!newTeamName.trim()) return;
+    const { error: err } = await supabase.from("teams").insert({ team_name: newTeamName.trim() });
+    if (err) { setError("เพิ่มทีมไม่สำเร็จ: " + err.message); return; }
+    setNewTeamName("");
+    setError("");
+    onChanged();
+  };
+
+  const deleteTeam = async (id) => {
+    if (!window.confirm("ลบทีมนี้? ผู้เข้าแข่งขันในทีมจะกลายเป็นยังไม่มีทีม")) return;
+    await supabase.from("teams").delete().eq("id", id);
+    onChanged();
+  };
+
+  return (
+    <div className="card">
+      <h2>จัดการทีม</h2>
+      {error && <div className="error-msg">{error}</div>}
+      <div className="team-add-row">
+        <input type="text" placeholder="ชื่อทีมใหม่" value={newTeamName}
+          onChange={e => setNewTeamName(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && addTeam()} />
+        <button className="btn-primary" onClick={addTeam}>เพิ่มทีม</button>
+      </div>
+      <div>
+        {teams.length === 0 && <span className="sub">ยังไม่มีทีม</span>}
+        {teams.map(t => (
+          <span className="team-chip" key={t.id}>
+            {t.team_name}
+            <button className="btn-danger" onClick={() => deleteTeam(t.id)}>ลบ</button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantsPanel({ participants, teams, onChanged }) {
+  const [filter, setFilter] = useState("all");
+
+  const approve = async (id) => {
+    await supabase.from("participants").update({ approved: true }).eq("id", id);
+    onChanged();
+  };
+  const unapprove = async (id) => {
+    await supabase.from("participants").update({ approved: false }).eq("id", id);
+    onChanged();
+  };
+  const remove = async (id) => {
+    if (!window.confirm("ลบผู้เข้าแข่งขันคนนี้?")) return;
+    await supabase.from("participants").delete().eq("id", id);
+    onChanged();
+  };
+  const setTeam = async (id, team_id) => {
+    await supabase.from("participants").update({ team_id: team_id || null }).eq("id", id);
+    onChanged();
+  };
+
+  const filtered = participants.filter(p => {
+    if (filter === "approved") return p.approved;
+    if (filter === "pending") return !p.approved;
+    return true;
+  });
+
+  const pendingCount = participants.filter(p => !p.approved).length;
+
+  return (
+    <div className="card">
+      <h2>ผู้เข้าแข่งขัน</h2>
+      <p className="count-badge">
+        ทั้งหมด {participants.length} คน · รออนุมัติ {pendingCount} คน
+      </p>
+      <div className="tab-bar">
+        <button className={`tab-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>ทั้งหมด</button>
+        <button className={`tab-btn ${filter === "pending" ? "active" : ""}`} onClick={() => setFilter("pending")}>รออนุมัติ</button>
+        <button className={`tab-btn ${filter === "approved" ? "active" : ""}`} onClick={() => setFilter("approved")}>อนุมัติแล้ว</button>
+      </div>
+
+      {filtered.length === 0 && <div className="empty-state">ไม่มีรายชื่อในหมวดนี้</div>}
+
+      {filtered.map(p => (
+        <div className="plist-item" key={p.id}>
+          <div className="plist-info">
+            <div className="plist-name">{p.first_name} {p.last_name}</div>
+            <div className="plist-code">รหัส: {p.code}</div>
+            {p.approved && !p.team_id && teams.length > 0 && (
+              <div className="no-team-warning">⚠ ยังไม่ได้จัดทีม</div>
+            )}
+          </div>
+          <span className={`status-badge ${p.approved ? "status-approved" : "status-pending"}`}>
+            {p.approved ? "อนุมัติแล้ว" : "รออนุมัติ"}
+          </span>
+          <select value={p.team_id || ""} onChange={e => setTeam(p.id, e.target.value)}>
+            <option value="">ไม่มีทีม</option>
+            {teams.map(t => <option key={t.id} value={t.id}>{t.team_name}</option>)}
+          </select>
+          <div className="plist-actions">
+            {p.approved ? (
+              <button className="btn-ghost" onClick={() => unapprove(p.id)}>ยกเลิกอนุมัติ</button>
+            ) : (
+              <button className="btn-approve" onClick={() => approve(p.id)}>อนุมัติ</button>
+            )}
+            <button className="btn-danger" onClick={() => remove(p.id)}>ลบ</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Dashboard() {
+  const [participants, setParticipants] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadAll = async () => {
+    setLoading(true);
+    const { data: pData } = await supabase.from("participants").select("*").order("created_at", { ascending: true });
+    const { data: tData } = await supabase.from("teams").select("*").order("team_name", { ascending: true });
+    setParticipants(pData || []);
+    setTeams(tData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAll(); }, []);
+
+  return (
+    <div>
+      <h1>✅ อนุมัติผู้เข้าแข่งขัน</h1>
+      <p className="sub">Anatomy Quick Quiz - จัดการรายชื่อและทีมก่อนวันแข่งขัน</p>
+      {loading ? (
+        <p className="sub">กำลังโหลด...</p>
+      ) : (
+        <React.Fragment>
+          <TeamsPanel teams={teams} onChanged={loadAll} />
+          <ParticipantsPanel participants={participants} teams={teams} onChanged={loadAll} />
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setChecking(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => setSession(sess));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  if (checking) return <div className="wrap"><p className="sub">กำลังตรวจสอบสิทธิ์...</p></div>;
+  if (!session) return <div className="wrap"><LoginBox onLoggedIn={setSession} /></div>;
+
+  return (
+    <div className="wrap">
+      <div style={{ textAlign: "right", marginBottom: 12 }}>
+        <button className="btn-ghost" onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
+      </div>
+      <Dashboard />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

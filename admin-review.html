@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ดูผลรายข้อ - Anatomy Quick Quiz</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #4a3540; --ink-soft: #9b8790; --line: #f5dfe6; --bg: #fff8f3; --card: #fff;
+    --accent: #16b897; --accent-soft: #d9f5ec; --danger: #ef6f6f; --danger-soft: #ffe8e8; --radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system,"Segoe UI","Noto Sans Thai",sans-serif; background: var(--bg); color: var(--ink); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.2px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 3px 14px rgba(74,53,64,0.06); margin-bottom: 18px; }
+  button { font-family: inherit; font-size: 13px; font-weight: 500; border-radius: 14px; border: none; padding: 8px 16px; cursor: pointer; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .search-row { margin-bottom: 16px; }
+  input[type=text] { padding: 10px 14px; border: 1px solid var(--line); border-radius: 16px; font-size: 14px; width: 100%; max-width: 280px; }
+  .matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+  table { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--line); }
+  th { background: var(--accent-soft); color: var(--accent); font-weight: 600; position: sticky; top: 0; }
+  .name-col { position: sticky; left: 0; background: #fff; text-align: left; font-weight: 500; z-index: 2; border-right: 1px solid var(--line); }
+  th.name-col { z-index: 3; }
+  .cell-correct { color: #16b897; font-weight: 700; }
+  .cell-wrong { color: #ef6f6f; font-weight: 700; }
+  .cell-none { color: #d8cdd1; }
+  .row-score { font-weight: 700; color: var(--accent); }
+  .login-box { max-width: 360px; margin: 80px auto 0; }
+  label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 500; }
+  .login-box input { width: 100%; max-width: none; margin-bottom: 14px; }
+  .error-msg { background: var(--danger-soft); color: var(--danger); padding: 10px 14px; border-radius: 14px; font-size: 13px; margin-bottom: 14px; }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 999px; }
+  .empty-state { text-align: center; padding: 30px 20px; color: var(--ink-soft); font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function LoginBox({ onLoggedIn }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const handleLogin = async () => {
+    setError("");
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+    if (err) { setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); return; }
+    onLoggedIn(data.session);
+  };
+  return (
+    <div className="login-box">
+      <div className="card">
+        <h1>🔐 เข้าสู่ระบบแอดมิน</h1>
+        <p className="sub">ดูผลรายข้อ</p>
+        {error && <div className="error-msg">{error}</div>}
+        <label>อีเมล</label>
+        <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+        <label>รหัสผ่าน</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleLogin()} />
+        <button className="btn-primary" style={{ width: "100%" }} onClick={handleLogin}>เข้าสู่ระบบ</button>
+      </div>
+    </div>
+  );
+}
+
+function ReviewMatrix() {
+  const [participants, setParticipants] = useState([]);
+  const [questionNos, setQuestionNos] = useState([]);
+  const [perQuestion, setPerQuestion] = useState({});
+  const [scores, setScores] = useState({});
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    const { data: participantsData } = await supabase.from("participants").select("id, code, first_name, last_name").eq("approved", true);
+    const { data: questions } = await supabase.from("questions").select("id, question_no").order("question_no", { ascending: true });
+    const { data: submissions } = await supabase.from("submissions").select("participant_id, question_id, is_correct, score");
+
+    const qnoByQid = {};
+    (questions || []).forEach(q => { qnoByQid[q.id] = q.question_no; });
+
+    const perQ = {};
+    const scoreMap = {};
+    (submissions || []).forEach(s => {
+      const qno = qnoByQid[s.question_id];
+      if (!perQ[s.participant_id]) perQ[s.participant_id] = {};
+      if (qno != null) perQ[s.participant_id][qno] = s.is_correct;
+      scoreMap[s.participant_id] = (scoreMap[s.participant_id] || 0) + (s.score || 0);
+    });
+
+    setParticipants(participantsData || []);
+    setQuestionNos((questions || []).map(q => q.question_no));
+    setPerQuestion(perQ);
+    setScores(scoreMap);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = useMemo(() => {
+    const list = participants.filter(p =>
+      !search.trim() ||
+      p.code.toLowerCase().includes(search.toLowerCase()) ||
+      `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase())
+    );
+    return list.sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+  }, [participants, search, scores]);
+
+  if (loading) return <p className="sub">กำลังโหลด...</p>;
+  if (questionNos.length === 0) return <div className="card empty-state">ยังไม่มีคำถามในระบบ</div>;
+  if (participants.length === 0) return <div className="card empty-state">ยังไม่มีผู้เข้าแข่งขันที่อนุมัติแล้ว</div>;
+
+  return (
+    <div>
+      <div className="search-row">
+        <input type="text" placeholder="ค้นหาชื่อหรือรหัส..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      <div className="matrix-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th className="name-col">ชื่อ</th>
+              <th>คะแนน</th>
+              {questionNos.map(n => <th key={n}>{n}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(p => {
+              const row = perQuestion[p.id] || {};
+              return (
+                <tr key={p.id}>
+                  <td className="name-col">{p.first_name} {p.last_name}<br /><span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>{p.code}</span></td>
+                  <td className="row-score">{scores[p.id] || 0}</td>
+                  {questionNos.map(n => {
+                    const v = row[n];
+                    const cls = v === true ? "cell-correct" : v === false ? "cell-wrong" : "cell-none";
+                    const label = v === true ? "✓" : v === false ? "✗" : "–";
+                    return <td key={n} className={cls}>{label}</td>;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setChecking(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  if (checking) return <div className="wrap"><p className="sub">กำลังตรวจสอบสิทธิ์...</p></div>;
+  if (!session) return <div className="wrap"><LoginBox onLoggedIn={setSession} /></div>;
+
+  return (
+    <div className="wrap">
+      <div style={{ textAlign: "right", marginBottom: 12 }}>
+        <button className="btn-ghost" onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
+      </div>
+      <h1>📊 ดูผลรายข้อ</h1>
+      <p className="sub">Anatomy Quick Quiz - ใครตอบถูก/ผิดข้อไหนบ้าง</p>
+      <div className="card">
+        <ReviewMatrix />
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

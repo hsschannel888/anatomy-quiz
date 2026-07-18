@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>สมัครเข้าแข่งขัน - Anatomy Quick Quiz</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --ink: #4a3540;
+    --ink-soft: #9b8790;
+    --line: #f5dfe6;
+    --bg: #fff8f3;
+    --card: #ffffff;
+    --accent: #16b897;
+    --accent-soft: #d9f5ec;
+    --danger: #ef6f6f;
+    --danger-soft: #ffe8e8;
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .wrap { width: 100%; max-width: 420px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; text-align: center; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 26px; text-align: center; }
+  label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 500; }
+  input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 16px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input[type=text]:focus { outline: none; border-color: var(--accent); }
+  button {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 14px;
+    border: none;
+    padding: 13px 18px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+  }
+  button:hover { background: #119b81; }
+  button:disabled { background: #a9b4ae; cursor: not-allowed; }
+  .error-msg { background: var(--danger-soft); color: var(--danger); padding: 10px 14px; border-radius: 14px; font-size: 13px; margin-bottom: 16px; }
+  .success-box { text-align: center; }
+  .success-icon { font-size: 40px; margin-bottom: 12px; }
+  .success-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .success-text { color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+
+  .btn-primary, button.primary { border-radius: 999px !important; box-shadow: 0 3px 10px rgba(22,184,151,0.25); }
+  .card { box-shadow: 0 3px 14px rgba(74,53,64,0.06); }
+  h1 { letter-spacing: -0.2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function App() {
+  const [code, setCode] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!code.trim() || !firstName.trim() || !lastName.trim()) {
+      setError("กรอกข้อมูลให้ครบทุกช่อง");
+      return;
+    }
+    setLoading(true);
+    const { error: err } = await supabase.from("participants").insert({
+      code: code.trim(),
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      approved: false,
+    });
+    setLoading(false);
+    if (err) {
+      if (err.code === "23505") {
+        setError("รหัสประจำตัวนี้มีคนสมัครไปแล้ว กรุณาตรวจสอบรหัสอีกครั้ง");
+      } else {
+        setError("สมัครไม่สำเร็จ: " + err.message);
+      }
+      return;
+    }
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="wrap">
+        <div className="card success-box">
+          <div className="success-icon">✓</div>
+          <div className="success-title">🎊 สมัครสำเร็จ</div>
+          <p className="success-text">
+            ข้อมูลของ {firstName} {lastName} ถูกส่งเข้าระบบแล้ว<br />
+            กรุณารอการอนุมัติจากเจ้าหน้าที่ก่อนวันแข่งขัน
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrap">
+      <div className="card">
+        <h1>🎉 สมัครเข้าแข่งขัน</h1>
+        <p className="sub">Anatomy Quick Quiz</p>
+        {error && <div className="error-msg">{error}</div>}
+
+        <label>รหัสประจำตัว</label>
+        <input type="text" value={code} onChange={e => setCode(e.target.value)} placeholder="กรอกรหัสประจำตัว" />
+
+        <label>ชื่อจริง</label>
+        <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="ชื่อจริง" />
+
+        <label>นามสกุล</label>
+        <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+          placeholder="นามสกุล" onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+
+        <button onClick={handleSubmit} disabled={loading}>
+          {loading ? "กำลังส่งข้อมูล..." : "สมัครเข้าแข่งขัน"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
