@@ -39,6 +39,7 @@
   .success-text { color: #9b8790; font-size: 14px; line-height: 1.6; }
   .top-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
   .greet { font-size: 14px; color: #9b8790; }
+  .exit-link { background: none; border: none; color: #9b8790; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; font-family: inherit; }
   .my-score { font-size: 16px; font-weight: 700; color: #16b897; }
   .status-title { text-align: center; font-size: 20px; font-weight: 700; margin: 30px 0 8px; }
   .status-sub { text-align: center; color: #9b8790; font-size: 14px; }
@@ -178,8 +179,20 @@ function QuizArea({ participant, onExit }) {
   useEffect(() => {
     if (!session || !session.current_question_no) { setQuestion(null); return; }
     supabase.from("questions").select("id,question_no").eq("question_no", session.current_question_no).single()
-      .then(({ data }) => setQuestion(data));
-    setPickedChoice(null);
+      .then(async ({ data }) => {
+        setQuestion(data);
+        setPickedChoice(null);
+        setAnsweredQno(null);
+        if (data) {
+          // เช็คฐานข้อมูลจริงว่าเคยตอบข้อนี้ไปแล้วหรือยัง (กันหน้าจอสับสนหลังรีโหลด)
+          const { data: existing } = await supabase.from("submissions").select("choice")
+            .eq("participant_id", participant.id).eq("question_id", data.id).maybeSingle();
+          if (existing) {
+            setPickedChoice(existing.choice);
+            setAnsweredQno(data.question_no);
+          }
+        }
+      });
   }, [session && session.current_question_no]);
 
   useEffect(() => {
@@ -218,7 +231,10 @@ function QuizArea({ participant, onExit }) {
   if (session.status === "waiting" || !question) {
     return (
       <div>
-        <div className="top-info"><span className="greet">สวัสดี {participant.name}</span></div>
+        <div className="top-info">
+          <span className="greet">สวัสดี {participant.name}</span>
+          <button className="exit-link" onClick={onExit}>ไม่ใช่ฉัน?</button>
+        </div>
         <div className="status-title">🕐 รอเริ่มการแข่งขัน</div>
         <div className="status-sub">มองไปที่จอโปรเจกเตอร์ด้านหน้า</div>
       </div>
@@ -232,7 +248,10 @@ function QuizArea({ participant, onExit }) {
       <div>
         <div className="top-info">
           <span className="greet">{participant.name}</span>
-          <span className="my-score">{totalScore} คะแนน</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="my-score">{totalScore} คะแนน</span>
+            <button className="exit-link" onClick={onExit}>ไม่ใช่ฉัน?</button>
+          </span>
         </div>
         <div className="answered-box">
           <div className="answered-icon">{alreadyAnswered ? "✓" : "⏰"}</div>
@@ -269,8 +288,13 @@ function StartTab() {
     if (saved) { try { setParticipant(JSON.parse(saved)); } catch (e) {} }
   }, []);
 
+  const handleExit = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setParticipant(null);
+  };
+
   if (!participant) return <CodeEntry onIdentified={setParticipant} />;
-  return <QuizArea participant={participant} />;
+  return <QuizArea participant={participant} onExit={handleExit} />;
 }
 
 function App() {
