@@ -70,7 +70,7 @@ function Leaderboard({ title }) {
     const ranked = Object.entries(totals)
       .map(([pid, score]) => ({ name: nameMap[pid] || "ไม่ทราบชื่อ", score }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+      .slice(0, 3);
     setRows(ranked);
   };
 
