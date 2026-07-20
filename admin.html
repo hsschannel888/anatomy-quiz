@@ -116,7 +116,9 @@ const { useState, useEffect, useMemo, useRef } = React;
 
 const SUPABASE_URL = "https://jepqcpxgffjlbpucyxhq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcHFjcHhnZmZqbGJwdWN5eGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzNTA3NzAsImV4cCI6MjA5OTkyNjc3MH0.RBsPcR1ujyD3ZE_JWslAaGDUJqJD7ku0TWn37tZDbCM";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false }
+});
 const CHOICES = ["A", "B", "C", "D"];
 const emptyForm = { question_no: "", question_text: "", choice_a: "", choice_b: "", choice_c: "", choice_d: "", correct_choice: "A", image_url: "" };
 const CONFIRM_WORD = "ล้างข้อมูล";
